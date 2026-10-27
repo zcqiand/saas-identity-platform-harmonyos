@@ -1,0 +1,6 @@
+{
+  "string": [
+    { "name": "app_name", "value": "saas 统一身份平台（HarmonyOS ArkTS 版）" },
+    { "name": "module_desc", "value": "saas-identity-platform-harmonyos entry 模块" }
+  ]
+}

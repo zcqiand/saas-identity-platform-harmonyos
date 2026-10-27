@@ -1,0 +1,5 @@
+{
+  // L1 Code Linter 风格集（profiles/harmonyos.toml [gates.L1]）。
+  // 与 L2 全量集分离：L1 只管风格面。规则误伤在此定向降级并写理由（禁改门定义）。
+  "rules": {}
+}

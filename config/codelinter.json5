@@ -1,0 +1,6 @@
+{
+  // L2 Code Linter 全量规则集（profiles/harmonyos.toml [gates.L2]）。
+  // 空规则表 = 全部走 CLI 内建默认。规则误伤在此定向降级并写理由（禁改门定义）；
+  // 规则键位装机首航校准后按 CLI 实际支持清单核对回填。
+  "rules": {}
+}

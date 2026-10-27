@@ -1,0 +1,4 @@
+{
+  "_comment": "随包配置。API_BASE_URL 空值 = AppConfig.ets 抛错（fail-fast，禁默认值兜底，suite-hard-rules §1）；Phase 1 接线时按家族档案 §6 填对应后端槽位 dev/prod 真值。",
+  "API_BASE_URL": ""
+}

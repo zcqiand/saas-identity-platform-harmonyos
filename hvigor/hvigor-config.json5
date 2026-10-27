@@ -1,0 +1,23 @@
+{
+  // hvigor 与插件版本钉版唯一面 = 仓根 version-lock.json。此值装机首航校准后回填真实版本。
+  "modelVersion": "5.0.0",
+  "dependencies": {
+    "@ohos/hvigor-ohos-plugin": "4.0.2" // pending-装机校准
+  },
+  "execution": {
+    // analyze: default | async。首航校准后如 daemon 在 Windows 卡死（android gradle daemon 同坑），
+    // 先探活再定性，禁静默关门。
+    "analyze": "default",
+    "daemon": true,
+    "incremental": true,
+    "parallel": true,
+    "typeCheck": false
+  },
+  "logging": {
+    "level": "info"
+  },
+  "debugging": {
+    "stackTrace": false
+  },
+  "nodeOptions": {}
+}

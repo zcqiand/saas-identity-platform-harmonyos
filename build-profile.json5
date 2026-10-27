@@ -1,0 +1,36 @@
+{
+  // app 级构建Profile。SDK 版本三值装机首航校准后回填（version-lock.json 同步改，
+  // 校准前 gate 本就不绿；报缺 SDK 组件照报错里的精确版本补装，禁降 API 版本）。
+  "app": {
+    "signingConfigs": [],
+    "products": [
+      {
+        "name": "default",
+        "compatibleSdkVersion": "5.0.0(12)", // pending-装机校准
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      { "name": "debug" },
+      { "name": "release" }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": ["default"]
+        }
+      ]
+    }
+  ]
+}

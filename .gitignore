@@ -1,0 +1,23 @@
+# hvigor / DevEco 构建产物（可再生件不入库）
+.hvigor/
+oh_modules/
+build/
+**/build/
+.cxx/
+local.properties
+
+# 签名材料禁入库（suite-hard-rules / profiles/harmonyos.toml stack_rules）
+*.p12
+*.cer
+*.p7b
+*.csr
+
+# IDE 本机态
+.idea/
+
+# 门禁运行时产物（机器再生，不入库；trace.json 由 trace_cmd 产出）
+.state/trace.json
+.state/gate.json
+.state/gate.partial.json
+.state/alignment.json
+.state/tree-change.json

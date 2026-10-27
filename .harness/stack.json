@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "suite_version": "0.6.0",
+  "project": "saas-identity-platform-harmonyos",
+  "stack": "harmonyos",
+  "gates": {
+    "L1": {
+      "name": "格式（Code Linter 风格集）",
+      "cmd": [
+        "codelinter",
+        "--rc",
+        "config/codelinter.style.json5",
+        "entry/src/main/ets",
+        "entry/src/test"
+      ],
+      "fix": "先确认 HarmonyOS SDK command-line tools 在 PATH（hvigorw --version / codelinter --version，与 gate 同调用 export）。逐条修复风格项；规则误伤在 config/codelinter.style.json5 定向降级并写理由，禁改门定义。CLI 形状装机首航校准。"
+    },
+    "L2": {
+      "name": "静态检查（Code Linter 全量）",
+      "cmd": [
+        "codelinter",
+        "--rc",
+        "config/codelinter.json5",
+        "entry/src/main/ets",
+        "entry/src/test"
+      ],
+      "fix": "先确认 codelinter 在 PATH。逐条修复；规则误伤在 config/codelinter.json5 定向降级并写理由，禁改门定义。ArkTS 严格约束（禁 any/结构偷换）报错回代码修。"
+    },
+    "L3": {
+      "name": "编译（assembleHap）",
+      "cmd": [
+        "hvigorw",
+        "--mode",
+        "module",
+        "-p",
+        "module=entry@default",
+        "assembleHap"
+      ],
+      "fix": "先确认 hvigorw / OHOS_SDK_HOME（SDK 装机见 suite 家族档案 X14 条）。编译错回代码修；报缺 SDK 组件照报错里的精确版本补装，禁降 API 版本。首跑拉 ohpm 依赖数分钟正常（华为镜像），反复卡死先探活再报。"
+    },
+    "L4": {
+      "name": "测试（Hypium 本地单测，带 trace 落盘）",
+      "cmd": [
+        "node",
+        "scripts/trace-test.mjs"
+      ],
+      "fix": "先确认 hvigorw 在 PATH（wrapper 以子进程调它），再让测试变绿。若测试本身有误，改测试前必须先说明理由。wrapper 报「找不到测试报告」= 报告路径装机未校准，先修 wrapper 候选表再谈其他。"
+    }
+  },
+  "trace_cmd": [
+    "node",
+    "scripts/trace-test.mjs"
+  ],
+  "trace_env": {},
+  "source_dirs": [
+    "entry/src/main/ets"
+  ],
+  "test_dirs": [
+    "entry/src/test"
+  ]
+}

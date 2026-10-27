@@ -1,0 +1,36 @@
+{
+  // entry 模块清单（Stage 模型）。骨架期零 requestPermissions、零业务面；
+  // Phase 1 接线时按 shared 契约生成物消费，禁手写 API 面（suite-hard-rules §4）。
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility",
+    "deviceTypes": [
+      "phone",
+      "tablet"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "$profile:main_pages",
+    "requestPermissions": [],
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
+        "description": "$string:module_desc",
+        "icon": "$media:icon",
+        "label": "$string:app_name",
+        "startWindowIcon": "$media:icon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "skills": [
+          {
+            "entities": ["entity.system.home"],
+            "actions": ["action.system.home"]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "_comment": "钉版唯一面（suite-hard-rules：禁裸写版本）。标 pending 的值装机首航校准后回填真实版本号——校准前 gate 本就不绿，不许拿 pending 值跑任何门。",
+  "hvigor": "pending-装机校准",
+  "hvigor-ohos-plugin": "pending-装机校准",
+  "compileSdkVersion": "pending-装机校准（建议最新 stable API）",
+  "compatibleSdkVersion": "pending-装机校准",
+  "targetSdkVersion": "pending-装机校准",
+  "ohpm-registry": "https://ohpm.openharmony.cn/ohpm/",
+  "hypium": "pending-装机校准",
+  "codelinter": "pending-装机校准",
+  "node": "pending-装机校准（hvigor 依赖 node，版本随 SDK 要求）"
+}
