@@ -1,0 +1,12 @@
+// 本文件由 harmonyos-api-gen 生成，禁手改；regen 先删后写（幂等字节级，无时间戳）。
+
+import { TokenRequestGrantType } from './TokenRequestGrantType';
+
+export interface TokenRequest {
+  grantType: TokenRequestGrantType;
+  code?: string;
+  refreshToken?: string;
+  clientId: string;
+  clientSecret?: string;
+  redirectUri?: string;
+}

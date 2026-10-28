@@ -7,6 +7,7 @@
   "targetSdkVersion": "6.0.1(21)",
   "ohpm-registry": "https://ohpm.openharmony.cn/ohpm/",
   "hypium": "1.0.30",
+  "harmonyos-api-runtime": "file:（ADR-0054 过渡分发，路径见 entry/oh-package.json5；轮子仓构建产物，非 registry 版本）",
   "codelinter": "6.0.240",
   "node": "18.20.1（command-line-tools 自带 tool/node，DEVECO_NODE_HOME 由 hvigorw.bat 自动设）",
   "_calibrated": "2026-10-28 装机首航：command-line-tools-windows-x64-6.0.1.251（HarmonyOS 6.0.1 Release / API 21），compileSdk=targetSdk=compatible=SUPPORT_COMPILE_VERSION 动态值。hvigor/hvigor-ohos-plugin 走 hvigor-config.json5 file: 离线指路（registry 无此包），版本必须与 CLT 自带严格一致"

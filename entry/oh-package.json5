@@ -7,7 +7,12 @@
   "main": "",
   "author": "",
   "license": "UNLICENSED",
-  "dependencies": {},
+  "dependencies": {
+    // ADR-0054 过渡分发：file: 挂轮子仓构建产物（ohpm file: 以本 oh-package 所在目录为基准解析；
+    // 相对 entry/ 上两级到 output/ 再进 sibling 轮子仓）。公开发布（registry/git）届时另行人批。
+    // 前置：轮子仓先构建 runtime HAR（缺失则本文件 ohpm install 直接红）。
+    "harmonyos-api-runtime": "file:../../harmonyos-api-gen/runtime/build/default/outputs/default/runtime.har"
+  },
   "devDependencies": {
     "@ohos/hypium": "1.0.30" // 2026-10-28 装机校准（ohpm 镜像 latest）
   }
