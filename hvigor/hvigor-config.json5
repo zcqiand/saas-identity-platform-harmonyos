@@ -1,8 +1,9 @@
 {
-  // hvigor 版本钉版唯一面 = 仓根 version-lock.json（与 CLT 自带 hvigor/hvigor-ohos-plugin 一致）。
-  // dependencies 是 schema 必填，且**必须钉 CLT 自带的同版本**：wrapper 检测到版本一致就用本地
-  // 包（跳过 npm 安装——@ohos scope 在 npmmirror/华为云镜像均 404，2026-10-28 装机首航实测）。
-  // 升级 CLT 时三处同步：version-lock.json + 此文件 + CLT 实际版本。
+  // hvigor 版本钉版唯一面 = 仓根 version-lock.json。dependencies 是 schema 必填，且**必须走
+  // file: 离线指路**：@ohos/hvigor 与 @ohos/hvigor-ohos-plugin 不在任何公共 registry
+  // （npmmirror/华为云/npmjs/ohpm 全 404），唯一来源是 CLT 自带包。wrapper 把 file: 解析到
+  // **<项目>/hvigor/ 目录**之下——../../../../../ 即仓所在盘根（本套仓在 D:\qiand-life 下，
+  // 爬五级到盘根再进 3-resources）。换盘/换 SDK 位置时改此两行 + version-lock.json（2026-10-28 首航实测）。
   "modelVersion": "6.0.1",
   "dependencies": {
     "@ohos/hvigor": "file:../../../../../3-resources/8-ego/software/harmonyos-sdk/command-line-tools/hvigor/hvigor",

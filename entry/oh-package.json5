@@ -3,7 +3,7 @@
   "modelVersion": "6.0.1",
   "name": "entry",
   "version": "1.0.0",
-  "description": "output/saas-identity-platform-harmonyos entry 模块",
+  "description": "saas 统一身份平台（HarmonyOS ArkTS 版） entry 模块",
   "main": "",
   "author": "",
   "license": "UNLICENSED",
