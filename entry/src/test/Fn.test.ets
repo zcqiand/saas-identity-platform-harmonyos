@@ -4,7 +4,7 @@
 import { describe, it, expect } from '@ohos/hypium';
 import { parseApiBaseUrl } from '../main/ets/config/AppConfig';
 
-export default function fnSuite(): void {
+export function fnSuite(): void {
   describe('harness_fn_anchor', () => {
     // fn:
     it('harness fn anchor round-trips into trace', 0, () => {

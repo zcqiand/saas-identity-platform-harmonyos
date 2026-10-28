@@ -1,9 +1,9 @@
 {
   // 工程 ohpm 包描述（根）。依赖钉版唯一面 = 仓根 version-lock.json，禁裸写版本。
-  "modelVersion": "5.0.0",
-  "name": "saas-identity-platform-harmonyos",
+  "modelVersion": "6.0.1",
+  "name": "__PROJECT__",
   "version": "1.0.0",
-  "description": "saas 统一身份平台（HarmonyOS ArkTS 版）（HarmonyOS ArkTS 版，X14 扩展槽）",
+  "description": "saas 统一身份平台（HarmonyOS ArkTS 版，X14 扩展槽）",
   "main": "",
   "author": "",
   "license": "UNLICENSED",

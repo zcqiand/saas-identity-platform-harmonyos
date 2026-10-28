@@ -3,6 +3,7 @@
 oh_modules/
 build/
 **/build/
+**/.test/
 .cxx/
 local.properties
 

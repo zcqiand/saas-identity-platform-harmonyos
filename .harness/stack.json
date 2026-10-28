@@ -8,7 +8,7 @@
       "name": "格式（Code Linter 风格集）",
       "cmd": [
         "codelinter",
-        "--rc",
+        "--config",
         "config/codelinter.style.json5",
         "entry/src/main/ets",
         "entry/src/test"
@@ -19,7 +19,7 @@
       "name": "静态检查（Code Linter 全量）",
       "cmd": [
         "codelinter",
-        "--rc",
+        "--config",
         "config/codelinter.json5",
         "entry/src/main/ets",
         "entry/src/test"

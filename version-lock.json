@@ -1,12 +1,13 @@
 {
   "_comment": "钉版唯一面（suite-hard-rules：禁裸写版本）。标 pending 的值装机首航校准后回填真实版本号——校准前 gate 本就不绿，不许拿 pending 值跑任何门。",
-  "hvigor": "pending-装机校准",
-  "hvigor-ohos-plugin": "pending-装机校准",
-  "compileSdkVersion": "pending-装机校准（建议最新 stable API）",
-  "compatibleSdkVersion": "pending-装机校准",
-  "targetSdkVersion": "pending-装机校准",
+  "hvigor": "6.21.1",
+  "hvigor-ohos-plugin": "6.21.1",
+  "compileSdkVersion": "6.0.1(21)",
+  "compatibleSdkVersion": "6.0.1(21)",
+  "targetSdkVersion": "6.0.1(21)",
   "ohpm-registry": "https://ohpm.openharmony.cn/ohpm/",
-  "hypium": "pending-装机校准",
-  "codelinter": "pending-装机校准",
-  "node": "pending-装机校准（hvigor 依赖 node，版本随 SDK 要求）"
+  "hypium": "1.0.30",
+  "codelinter": "6.0.240",
+  "node": "18.20.1（command-line-tools 自带 tool/node，DEVECO_NODE_HOME 由 hvigorw.bat 自动设）",
+  "_calibrated": "2026-10-28 装机首航：command-line-tools-windows-x64-6.0.1.251（HarmonyOS 6.0.1 Release / API 21），compileSdk=targetSdk=compatible=SUPPORT_COMPILE_VERSION 动态值。hvigor/hvigor-ohos-plugin 走 hvigor-config.json5 file: 离线指路（registry 无此包），版本必须与 CLT 自带严格一致"
 }

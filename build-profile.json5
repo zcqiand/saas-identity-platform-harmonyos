@@ -6,7 +6,8 @@
     "products": [
       {
         "name": "default",
-        "compatibleSdkVersion": "5.0.0(12)", // pending-装机校准
+        "compatibleSdkVersion": "6.0.1(21)", // 2026-10-28 装机校准（API 21，hvigor 最低兼容 4.0.0(10)）
+        "targetSdkVersion": "6.0.1(21)", // 显式声明（缺省 WARN，hvigor SUPPORT_COMPILE_VERSION 动态值同源）
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

@@ -14,10 +14,10 @@
 //
 // 空 `// fn:`（冒号后无 ID）= 该测试是工程设施测试，不挂业务 ID。挂假 ID 会在 L5 悬空。
 //
-// 【装机首航校准声明】（2026-10-27 骨架期）：
-//   - HVIGOR_TEST_ARGS 与 REPORT_CANDIDATES 两表按官方文档形状预写，装机首航校准后修正。
-//   - wrapper 报「找不到测试报告」= 报告路径装机未校准，先修候选表再谈其他
-//     （profiles/harmonyos.toml [gates.L4].fix 同文）。
+// 【装机首航校准】（2026-10-28 已完成）：HVIGOR_TEST_ARGS 与 REPORT_CANDIDATES 按实测回填——
+//   hvigorw test 真实参数=HVIGOR_TEST_ARGS 原样（BUILD SUCCESSFUL + GenerateUnitTestResult 有产出）；
+//   报告真实落点=entry/.test/default/intermediates/test/coverage_data/test_result.txt（键值四元组流，
+//   解析器 parseKvReport）。换 SDK 大版本时重验两表。
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -42,10 +42,10 @@ const HVIGOR_TEST_ARGS = [
 ];
 
 // 测试报告候选目录（按优先级；存在多个取最新 mtime 的那个）。
+// 2026-10-28 装机首航校准：hvigorw test（onDevice=false）真实落点 =
+// entry/.test/default/intermediates/test/coverage_data/test_result.txt。
 const REPORT_CANDIDATES = [
-  path.join(ROOT, 'entry', '.test', 'default', 'outputs', 'test'),
-  path.join(ROOT, 'entry', 'build', 'default', 'outputs', 'test'),
-  path.join(ROOT, '.hvigor', 'outputs', 'test'),
+  path.join(ROOT, 'entry', '.test', 'default', 'intermediates', 'test', 'coverage_data'),
 ];
 
 // ---- 工具函数 ----
@@ -109,10 +109,13 @@ function scanAnchors() {
 let hvigorStatus = null;
 
 function runHvigor() {
-  const r = spawnSync('hvigorw', HVIGOR_TEST_ARGS, {
+  const cmd = process.platform === 'win32'
+    ? ['hvigorw.bat', ...HVIGOR_TEST_ARGS].join(' ')
+    : ['hvigorw', ...HVIGOR_TEST_ARGS].join(' ');
+  const r = spawnSync(cmd, {
     cwd: ROOT,
     stdio: 'inherit',
-    shell: process.platform === 'win32',
+    shell: true,
   });
   hvigorStatus = r.status;
   // 测试失败（非 0）不直接 die：报告仍要读——trace 需要记录哪些测试红了。
@@ -150,6 +153,34 @@ function parseTxtLine(line) {
   return { name: m[1].trim(), state: m[2] };
 }
 
+// Hypium 本地单测报告真实形状（2026-10-28 装机首航校准）——键值四元组流：
+//   class=<describe 名>
+//   test=<it 名>
+//   result=Success | Failure | Error
+// （class 在同名 describe 的后续 it 可省略；末行 `Tests run: ...` 汇总，无 state 词自然跳过）
+function parseKvReport(text, out) {
+  let cls = '';
+  let name = '';
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+    let m = /^class=(.+)$/.exec(line);
+    if (m) {
+      cls = m[1].trim();
+      continue;
+    }
+    m = /^test=(.+)$/.exec(line);
+    if (m) {
+      name = m[1].trim();
+      continue;
+    }
+    m = /^result=(.+)$/.exec(line);
+    if (m && name) {
+      out.push({ name: cls ? `${cls} > ${name}` : name, state: m[1].trim() });
+      name = '';
+    }
+  }
+}
+
 function findReport() {
   const files = [];
   for (const dir of REPORT_CANDIDATES) {
@@ -181,6 +212,7 @@ function findReport() {
         /* 非测试报告的 json（配置/清单），跳过 */
       }
     } else {
+      parseKvReport(text, entries);
       for (const line of text.split(/\r?\n/)) {
         const t = parseTxtLine(line);
         if (t) entries.push(t);

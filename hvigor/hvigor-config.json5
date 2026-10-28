@@ -1,13 +1,19 @@
 {
-  // hvigor 与插件版本钉版唯一面 = 仓根 version-lock.json。此值装机首航校准后回填真实版本。
-  "modelVersion": "5.0.0",
+  // hvigor 版本钉版唯一面 = 仓根 version-lock.json（与 CLT 自带 hvigor/hvigor-ohos-plugin 一致）。
+  // dependencies 是 schema 必填，且**必须钉 CLT 自带的同版本**：wrapper 检测到版本一致就用本地
+  // 包（跳过 npm 安装——@ohos scope 在 npmmirror/华为云镜像均 404，2026-10-28 装机首航实测）。
+  // 升级 CLT 时三处同步：version-lock.json + 此文件 + CLT 实际版本。
+  "modelVersion": "6.0.1",
   "dependencies": {
-    "@ohos/hvigor-ohos-plugin": "4.0.2" // pending-装机校准
+    "@ohos/hvigor": "file:../../../../../3-resources/8-ego/software/harmonyos-sdk/command-line-tools/hvigor/hvigor",
+    "@ohos/hvigor-ohos-plugin": "file:../../../../../3-resources/8-ego/software/harmonyos-sdk/command-line-tools/hvigor/hvigor-ohos-plugin"
   },
   "execution": {
     // analyze: default | async。首航校准后如 daemon 在 Windows 卡死（android gradle daemon 同坑），
     // 先探活再定性，禁静默关门。
-    "analyze": "default",
+    // analyze: normal（'default' 已弃用，2026-10-28 装机首航 WARN）。首航校准后如 daemon 在
+    // Windows 卡死（android gradle daemon 同坑），先探活再定性，禁静默关门。
+    "analyze": "normal",
     "daemon": true,
     "incremental": true,
     "parallel": true,

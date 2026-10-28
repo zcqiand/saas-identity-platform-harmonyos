@@ -1,14 +1,14 @@
 {
   // entry HAP 模块 ohpm 包描述。依赖钉版唯一面 = 仓根 version-lock.json。
-  "modelVersion": "5.0.0",
+  "modelVersion": "6.0.1",
   "name": "entry",
   "version": "1.0.0",
-  "description": "saas 统一身份平台（HarmonyOS ArkTS 版） entry 模块",
+  "description": "output/saas-identity-platform-harmonyos entry 模块",
   "main": "",
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {},
   "devDependencies": {
-    "@ohos/hypium": "1.0.21" // pending-装机校准
+    "@ohos/hypium": "1.0.30" // 2026-10-28 装机校准（ohpm 镜像 latest）
   }
 }
