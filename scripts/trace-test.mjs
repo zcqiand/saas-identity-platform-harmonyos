@@ -196,8 +196,7 @@ function findReport() {
           '先确认 HarmonyOS SDK command-line tools 在 PATH（与 gate 同一调用 export——android 同坑）；' +
           '命令通了再修候选表。';
     die(
-      '找不到测试报告。装机首航未校准：先手动跑通 hvigorw 本地测试，' +
-        '定位真实报告目录，回填 REPORT_CANDIDATES 再谈其他。\n' +
+      '找不到测试报告。先看下方 hvigorw 退出码分诊；常见=ohpm install 没跑或编译失败。\n' +
         hint +
         `\n已扫目录：\n${REPORT_CANDIDATES.map((d) => `  - ${d}`).join('\n')}`,
     );
@@ -222,7 +221,7 @@ function findReport() {
   if (entries.length === 0) {
     die(
       `报告目录里有文件但没有解析出任何测试条目（${files.length} 个候选文件）。` +
-        '解析器（collectJsonTests/parseTxtLine）装机未校准：先看真实报告形状再修。',
+        '报告格式异常：parseKvReport 与真实报告形状失配（SDK 大版本变更？）先核报告再修。',
     );
   }
   return entries;
