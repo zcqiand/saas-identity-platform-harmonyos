@@ -4,6 +4,7 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { ApiError } from 'harmonyos-api-runtime';
+import { TenantMemberUserView } from '../shared/models/TenantMemberUserView';
 import { session } from '../session/Session';
 
 @Entry
@@ -15,6 +16,8 @@ struct Index {
   @State busy: boolean = false;
   @State loggedIn: boolean = false;
   @State whoamiText: string = '';
+  @State members: TenantMemberUserView[] = [];
+  @State memberTotal: number = 0;
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -29,6 +32,19 @@ struct Index {
     }
   }
 
+  // whoami → currentTenantId（契约可选字段缺失即抛——禁兜底，成员面无租户不可定位）
+  private async loadMembers(): Promise<void> {
+    const me = await session.whoami();
+    this.whoamiText = `${me.id}（租户 ${me.currentTenantId ?? '无'}）`;
+    if (me.currentTenantId === undefined || me.currentTenantId === '') {
+      throw new Error('whoami 缺 currentTenantId——无法定位租户成员面（fail-fast 禁兜底）');
+    }
+    // saas 分页 0 基（Spring Data Pageable；live 实证 page=1 空、page=0 有数据）
+    const resp = await session.listMembers(me.currentTenantId, 0, 20);
+    this.members = resp.items;
+    this.memberTotal = resp.total;
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -38,8 +54,7 @@ struct Index {
     try {
       await this.ensureConfigured();
       await session.login(this.username, this.password);
-      const me = await session.whoami();
-      this.whoamiText = `${me.id}（租户 ${me.currentTenantId ?? '无'}）`;
+      await this.loadMembers();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -65,6 +80,8 @@ struct Index {
     } finally {
       this.loggedIn = false;
       this.whoamiText = '';
+      this.members = [];
+      this.memberTotal = 0;
       this.password = '';
       this.busy = false;
     }
@@ -100,6 +117,34 @@ struct Index {
       } else {
         Text(`已登录：${this.whoamiText}`)
           .fontSize(15)
+        Text(`租户成员（共 ${this.memberTotal} 条）`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        if (this.members.length > 0) {
+          List() {
+            ForEach(this.members, (item: TenantMemberUserView) => {
+              ListItem() {
+                Column({ space: 2 }) {
+                  Text(`${item.username}（${item.status}）`)
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                  Text(`角色 ${item.roleIds.length} 个 · ${item.email ?? '—'}`)
+                    .fontSize(12)
+                    .opacity(0.6)
+                }
+                .alignItems(HorizontalAlign.Start)
+                .width('100%')
+              }
+              .padding(6)
+            }, (item: TenantMemberUserView) => item.id)
+          }
+          .width('88%')
+          .height('40%')
+        } else {
+          Text('（无成员数据）')
+            .fontSize(13)
+            .opacity(0.6)
+        }
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

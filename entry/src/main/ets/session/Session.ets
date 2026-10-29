@@ -3,8 +3,9 @@
 //   - clientId = saas-console（家族档案 saas 值表：console 应用）
 //   - tokenProvider 每请求现取（SessionState），不落缓存不自动续期
 import { ApiClient } from 'harmonyos-api-runtime';
-import { SessionsApi, MeApi } from '../shared';
+import { SessionsApi, MeApi, TenantMembersApi } from '../shared';
 import { CurrentUser } from '../shared/models/CurrentUser';
+import { TenantMembersListTenantUsersResponse } from '../shared/models/TenantMembersListTenantUsersResponse';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -15,6 +16,7 @@ export class Session {
   private readonly state: SessionState;
   private sessionsApi: SessionsApi | null = null;
   private meApi: MeApi | null = null;
+  private tenantMembersApi: TenantMembersApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -26,6 +28,7 @@ export class Session {
     const client = new ApiClient(baseUrl, () => this.state.tokenProvider());
     this.sessionsApi = new SessionsApi(client);
     this.meApi = new MeApi(client);
+    this.tenantMembersApi = new TenantMembersApi(client);
   }
 
   private requireSessions(): SessionsApi {
@@ -40,6 +43,13 @@ export class Session {
       throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
     }
     return this.meApi;
+  }
+
+  private requireTenantMembers(): TenantMembersApi {
+    if (this.tenantMembersApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.tenantMembersApi;
   }
 
   authenticated(): boolean {
@@ -57,6 +67,10 @@ export class Session {
 
   whoami(): Promise<CurrentUser> {
     return this.requireMe().whoami();
+  }
+
+  listMembers(tenantId: string, page: number, pageSize: number): Promise<TenantMembersListTenantUsersResponse> {
+    return this.requireTenantMembers().listTenantUsers(tenantId, page, pageSize);
   }
 
   async logout(): Promise<void> {
