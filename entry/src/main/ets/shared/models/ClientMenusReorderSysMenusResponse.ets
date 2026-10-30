@@ -2,4 +2,4 @@
 
 import { SysMenu } from './SysMenu';
 
-export type ClientMenusReorderSysMenusResponse = SysMenu;
+export type ClientMenusReorderSysMenusResponse = Array<SysMenu>;

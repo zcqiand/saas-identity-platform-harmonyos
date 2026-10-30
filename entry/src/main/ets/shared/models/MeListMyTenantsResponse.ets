@@ -2,4 +2,4 @@
 
 import { TenantMembership } from './TenantMembership';
 
-export type MeListMyTenantsResponse = TenantMembership;
+export type MeListMyTenantsResponse = Array<TenantMembership>;
