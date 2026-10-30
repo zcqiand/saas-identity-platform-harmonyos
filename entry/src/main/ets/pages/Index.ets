@@ -6,6 +6,8 @@ import { util } from '@kit.ArkTS';
 import { ApiError } from 'harmonyos-api-runtime';
 import { TenantMemberUserView } from '../shared/models/TenantMemberUserView';
 import { SysRole } from '../shared/models/SysRole';
+import { Tenant } from '../shared/models/Tenant';
+import { OAuthClient } from '../shared/models/OAuthClient';
 import { session } from '../session/Session';
 
 @Entry
@@ -22,6 +24,10 @@ struct Index {
   @State roles: SysRole[] = [];
   @State roleTotal: number = 0;
   @State grantText: string = '';
+  @State tenants: Tenant[] = [];
+  @State tenantTotal: number = 0;
+  @State clients: OAuthClient[] = [];
+  @State clientTotal: number = 0;
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -69,6 +75,16 @@ struct Index {
     this.grantText = `${role.roleName} 已授权菜单 ${grant.menuIds.length} 个（${grant.updatedAt}）`;
   }
 
+  // admin 只读双列表（片4）：租户 + OAuth 客户端，0 基分页
+  private async loadAdmin(): Promise<void> {
+    const tenantsResp = await session.listTenants(0, 20);
+    this.tenants = tenantsResp.items;
+    this.tenantTotal = tenantsResp.total;
+    const clientsResp = await session.listClients(0, 20);
+    this.clients = clientsResp.items;
+    this.clientTotal = clientsResp.total;
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -80,6 +96,7 @@ struct Index {
       await session.login(this.username, this.password);
       const tenantId = await this.loadMembers();
       await this.loadRoles(tenantId);
+      await this.loadAdmin();
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -110,13 +127,18 @@ struct Index {
       this.roles = [];
       this.roleTotal = 0;
       this.grantText = '';
+      this.tenants = [];
+      this.tenantTotal = 0;
+      this.clients = [];
+      this.clientTotal = 0;
       this.password = '';
       this.busy = false;
     }
   }
 
   build() {
-    Column({ space: 12 }) {
+    Scroll() {
+      Column({ space: 12 }) {
       Text('saas 统一身份平台')
         .fontSize(26)
         .fontWeight(FontWeight.Bold)
@@ -209,6 +231,43 @@ struct Index {
             .fontSize(13)
             .opacity(0.75)
         }
+        Text(`租户（共 ${this.tenantTotal} 条）`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.tenants, (item: Tenant) => {
+            ListItem() {
+              Text(`${item.name}（${item.tenantKey} · ${item.status}）`)
+                .fontSize(14)
+                .width('100%')
+            }
+            .padding(4)
+          }, (item: Tenant) => item.id)
+        }
+        .width('88%')
+        .height(this.tenants.length > 4 ? '14%' : undefined)
+        Text(`OAuth 客户端（共 ${this.clientTotal} 条）`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.clients, (item: OAuthClient) => {
+            ListItem() {
+              Column({ space: 2 }) {
+                Text(`${item.clientName}（${item.clientId}）`)
+                  .fontSize(14)
+                  .fontWeight(FontWeight.Medium)
+                Text(`状态 ${item.status} · token ${item.accessTokenValidity}s`)
+                  .fontSize(12)
+                  .opacity(0.6)
+              }
+              .alignItems(HorizontalAlign.Start)
+              .width('100%')
+            }
+            .padding(4)
+          }, (item: OAuthClient) => item.id)
+        }
+        .width('88%')
+        .height(this.clients.length > 4 ? '14%' : undefined)
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)
@@ -222,9 +281,13 @@ struct Index {
           .fontSize(13)
           .opacity(0.75)
       }
+      }
+      .width('100%')
+      .justifyContent(FlexAlign.Center)
+      .padding({ top: 24, bottom: 24 })
     }
     .width('100%')
     .height('100%')
-    .justifyContent(FlexAlign.Center)
+    .align(Alignment.Top)
   }
 }

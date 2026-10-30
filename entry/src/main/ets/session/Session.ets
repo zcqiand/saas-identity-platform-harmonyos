@@ -3,11 +3,16 @@
 //   - clientId = saas-console（家族档案 saas 值表：console 应用）
 //   - tokenProvider 每请求现取（SessionState），不落缓存不自动续期
 import { ApiClient } from 'harmonyos-api-runtime';
-import { SessionsApi, MeApi, TenantMembersApi, TenantRolesApi, TenantRoleMenusApi } from '../shared';
+import {
+  SessionsApi, MeApi, TenantMembersApi, TenantRolesApi, TenantRoleMenusApi,
+  AdminTenantsApi, AdminClientsApi
+} from '../shared';
 import { CurrentUser } from '../shared/models/CurrentUser';
 import { TenantMembersListTenantUsersResponse } from '../shared/models/TenantMembersListTenantUsersResponse';
 import { TenantRolesListSysRolesResponse } from '../shared/models/TenantRolesListSysRolesResponse';
 import { RoleMenuGrant } from '../shared/models/RoleMenuGrant';
+import { AdminTenantsListTenantsResponse } from '../shared/models/AdminTenantsListTenantsResponse';
+import { AdminClientsListClientsResponse } from '../shared/models/AdminClientsListClientsResponse';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -21,6 +26,8 @@ export class Session {
   private tenantMembersApi: TenantMembersApi | null = null;
   private tenantRolesApi: TenantRolesApi | null = null;
   private tenantRoleMenusApi: TenantRoleMenusApi | null = null;
+  private adminTenantsApi: AdminTenantsApi | null = null;
+  private adminClientsApi: AdminClientsApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -35,6 +42,8 @@ export class Session {
     this.tenantMembersApi = new TenantMembersApi(client);
     this.tenantRolesApi = new TenantRolesApi(client);
     this.tenantRoleMenusApi = new TenantRoleMenusApi(client);
+    this.adminTenantsApi = new AdminTenantsApi(client);
+    this.adminClientsApi = new AdminClientsApi(client);
   }
 
   private requireSessions(): SessionsApi {
@@ -72,6 +81,20 @@ export class Session {
     return this.tenantRoleMenusApi;
   }
 
+  private requireAdminTenants(): AdminTenantsApi {
+    if (this.adminTenantsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.adminTenantsApi;
+  }
+
+  private requireAdminClients(): AdminClientsApi {
+    if (this.adminClientsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.adminClientsApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -101,6 +124,15 @@ export class Session {
   // 角色已授权菜单（片3）：返回 RoleMenuGrant（roleId/tenantId/menuIds/updatedAt）
   listRoleMenus(tenantId: string, roleId: string): Promise<RoleMenuGrant> {
     return this.requireTenantRoleMenus().listSysRoleMenus(tenantId, roleId, undefined);
+  }
+
+  // admin 只读双列表（片4）：租户全量面 + OAuth 客户端全量面（0 基分页）
+  listTenants(page: number, pageSize: number): Promise<AdminTenantsListTenantsResponse> {
+    return this.requireAdminTenants().listTenants(page, pageSize);
+  }
+
+  listClients(page: number, pageSize: number): Promise<AdminClientsListClientsResponse> {
+    return this.requireAdminClients().listClients(page, pageSize);
   }
 
   async logout(): Promise<void> {
