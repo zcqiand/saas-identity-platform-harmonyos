@@ -5,6 +5,7 @@ import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
 import { ApiError } from 'harmonyos-api-runtime';
 import { TenantMemberUserView } from '../shared/models/TenantMemberUserView';
+import { SysRole } from '../shared/models/SysRole';
 import { session } from '../session/Session';
 
 @Entry
@@ -18,6 +19,9 @@ struct Index {
   @State whoamiText: string = '';
   @State members: TenantMemberUserView[] = [];
   @State memberTotal: number = 0;
+  @State roles: SysRole[] = [];
+  @State roleTotal: number = 0;
+  @State grantText: string = '';
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -32,8 +36,9 @@ struct Index {
     }
   }
 
-  // whoami → currentTenantId（契约可选字段缺失即抛——禁兜底，成员面无租户不可定位）
-  private async loadMembers(): Promise<void> {
+  // whoami → currentTenantId（契约可选字段缺失即抛——禁兜底，成员面无租户不可定位）；
+  // 返回租户 ID 供后续分区（角色片）复用
+  private async loadMembers(): Promise<string> {
     const me = await session.whoami();
     this.whoamiText = `${me.id}（租户 ${me.currentTenantId ?? '无'}）`;
     if (me.currentTenantId === undefined || me.currentTenantId === '') {
@@ -43,6 +48,25 @@ struct Index {
     const resp = await session.listMembers(me.currentTenantId, 0, 20);
     this.members = resp.items;
     this.memberTotal = resp.total;
+    return me.currentTenantId;
+  }
+
+  // 角色列表（片3，只读）：同租户面 0 基分页
+  private async loadRoles(tenantId: string): Promise<void> {
+    const resp = await session.listRoles(tenantId, 0, 20);
+    this.roles = resp.items;
+    this.roleTotal = resp.total;
+    this.grantText = '';
+  }
+
+  // 点角色拉已授权菜单（片3）：RoleMenuGrant.menuIds 计数展示
+  private async loadRoleMenus(role: SysRole): Promise<void> {
+    const me = await session.whoami();
+    if (me.currentTenantId === undefined || me.currentTenantId === '') {
+      throw new Error('whoami 缺 currentTenantId——无法定位角色菜单面（fail-fast 禁兜底）');
+    }
+    const grant = await session.listRoleMenus(me.currentTenantId, role.id);
+    this.grantText = `${role.roleName} 已授权菜单 ${grant.menuIds.length} 个（${grant.updatedAt}）`;
   }
 
   private async doLogin(): Promise<void> {
@@ -54,7 +78,8 @@ struct Index {
     try {
       await this.ensureConfigured();
       await session.login(this.username, this.password);
-      await this.loadMembers();
+      const tenantId = await this.loadMembers();
+      await this.loadRoles(tenantId);
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -82,6 +107,9 @@ struct Index {
       this.whoamiText = '';
       this.members = [];
       this.memberTotal = 0;
+      this.roles = [];
+      this.roleTotal = 0;
+      this.grantText = '';
       this.password = '';
       this.busy = false;
     }
@@ -144,6 +172,42 @@ struct Index {
           Text('（无成员数据）')
             .fontSize(13)
             .opacity(0.6)
+        }
+        Text(`角色（共 ${this.roleTotal} 条，点选看授权菜单）`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        if (this.roles.length > 0) {
+          List() {
+            ForEach(this.roles, (item: SysRole) => {
+              ListItem() {
+                Column({ space: 2 }) {
+                  Text(`${item.roleName}（${item.roleCode}）`)
+                    .fontSize(14)
+                    .fontWeight(FontWeight.Medium)
+                  Text(`状态 ${item.status}${item.isPreset ? ' · 预置' : ''} · ${item.clientId}`)
+                    .fontSize(12)
+                    .opacity(0.6)
+                }
+                .alignItems(HorizontalAlign.Start)
+                .width('100%')
+              }
+              .padding(6)
+              .onClick(() => {
+                this.loadRoleMenus(item);
+              })
+            }, (item: SysRole) => item.id)
+          }
+          .width('88%')
+          .height('22%')
+        } else {
+          Text('（无角色数据）')
+            .fontSize(13)
+            .opacity(0.6)
+        }
+        if (this.grantText !== '') {
+          Text(this.grantText)
+            .fontSize(13)
+            .opacity(0.75)
         }
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')

@@ -3,9 +3,11 @@
 //   - clientId = saas-console（家族档案 saas 值表：console 应用）
 //   - tokenProvider 每请求现取（SessionState），不落缓存不自动续期
 import { ApiClient } from 'harmonyos-api-runtime';
-import { SessionsApi, MeApi, TenantMembersApi } from '../shared';
+import { SessionsApi, MeApi, TenantMembersApi, TenantRolesApi, TenantRoleMenusApi } from '../shared';
 import { CurrentUser } from '../shared/models/CurrentUser';
 import { TenantMembersListTenantUsersResponse } from '../shared/models/TenantMembersListTenantUsersResponse';
+import { TenantRolesListSysRolesResponse } from '../shared/models/TenantRolesListSysRolesResponse';
+import { RoleMenuGrant } from '../shared/models/RoleMenuGrant';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -17,6 +19,8 @@ export class Session {
   private sessionsApi: SessionsApi | null = null;
   private meApi: MeApi | null = null;
   private tenantMembersApi: TenantMembersApi | null = null;
+  private tenantRolesApi: TenantRolesApi | null = null;
+  private tenantRoleMenusApi: TenantRoleMenusApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -29,6 +33,8 @@ export class Session {
     this.sessionsApi = new SessionsApi(client);
     this.meApi = new MeApi(client);
     this.tenantMembersApi = new TenantMembersApi(client);
+    this.tenantRolesApi = new TenantRolesApi(client);
+    this.tenantRoleMenusApi = new TenantRoleMenusApi(client);
   }
 
   private requireSessions(): SessionsApi {
@@ -52,6 +58,20 @@ export class Session {
     return this.tenantMembersApi;
   }
 
+  private requireTenantRoles(): TenantRolesApi {
+    if (this.tenantRolesApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.tenantRolesApi;
+  }
+
+  private requireTenantRoleMenus(): TenantRoleMenusApi {
+    if (this.tenantRoleMenusApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.tenantRoleMenusApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -71,6 +91,16 @@ export class Session {
 
   listMembers(tenantId: string, page: number, pageSize: number): Promise<TenantMembersListTenantUsersResponse> {
     return this.requireTenantMembers().listTenantUsers(tenantId, page, pageSize);
+  }
+
+  // 角色只读列表（片3）：clientId 可选面本片不筛——undefined 显式传，禁兜底成空串
+  listRoles(tenantId: string, page: number, pageSize: number): Promise<TenantRolesListSysRolesResponse> {
+    return this.requireTenantRoles().listSysRoles(tenantId, undefined, page, pageSize);
+  }
+
+  // 角色已授权菜单（片3）：返回 RoleMenuGrant（roleId/tenantId/menuIds/updatedAt）
+  listRoleMenus(tenantId: string, roleId: string): Promise<RoleMenuGrant> {
+    return this.requireTenantRoleMenus().listSysRoleMenus(tenantId, roleId, undefined);
   }
 
   async logout(): Promise<void> {
