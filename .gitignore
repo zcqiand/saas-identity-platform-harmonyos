@@ -22,3 +22,6 @@ local.properties
 .state/gate.partial.json
 .state/alignment.json
 .state/tree-change.json
+
+# 过程件不进版本库（2026-10-24 人裁，全产品线通用）
+_work/
