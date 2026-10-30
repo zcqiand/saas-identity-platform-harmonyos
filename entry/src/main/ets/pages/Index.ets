@@ -8,6 +8,9 @@ import { TenantMemberUserView } from '../shared/models/TenantMemberUserView';
 import { SysRole } from '../shared/models/SysRole';
 import { Tenant } from '../shared/models/Tenant';
 import { OAuthClient } from '../shared/models/OAuthClient';
+import { TenantApplication } from '../shared/models/TenantApplication';
+import { OAuthClientPublicInfo } from '../shared/models/OAuthClientPublicInfo';
+import { SysMenu } from '../shared/models/SysMenu';
 import { session } from '../session/Session';
 
 @Entry
@@ -28,6 +31,10 @@ struct Index {
   @State tenantTotal: number = 0;
   @State clients: OAuthClient[] = [];
   @State clientTotal: number = 0;
+  @State apps: TenantApplication[] = [];
+  @State appTotal: number = 0;
+  @State menus: SysMenu[] = [];
+  @State menuClientText: string = '';
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -75,14 +82,27 @@ struct Index {
     this.grantText = `${role.roleName} 已授权菜单 ${grant.menuIds.length} 个（${grant.updatedAt}）`;
   }
 
-  // admin 只读双列表（片4）：租户 + OAuth 客户端，0 基分页
-  private async loadAdmin(): Promise<void> {
+  // admin 只读双列表（片4）：租户 + OAuth 客户端，0 基分页；随后拉本租户订阅应用（片5）
+  private async loadAdmin(tenantId: string): Promise<void> {
     const tenantsResp = await session.listTenants(0, 20);
     this.tenants = tenantsResp.items;
     this.tenantTotal = tenantsResp.total;
     const clientsResp = await session.listClients(0, 20);
     this.clients = clientsResp.items;
     this.clientTotal = clientsResp.total;
+    const appsResp = await session.listTenantApplications(tenantId, 0, 20);
+    this.apps = appsResp.items;
+    this.appTotal = appsResp.total;
+    this.menus = [];
+    this.menuClientText = '';
+  }
+
+  // 点客户端拉公开信息 + 菜单扁平节点（片5）
+  private async loadClientMenus(client: OAuthClient): Promise<void> {
+    const info: OAuthClientPublicInfo = await session.getClientPublic(client.clientId);
+    const menus = await session.listClientMenus(client.clientId);
+    this.menus = menus;
+    this.menuClientText = `${info.clientName}（${info.clientId}）菜单 ${menus.length} 个`;
   }
 
   private async doLogin(): Promise<void> {
@@ -96,7 +116,7 @@ struct Index {
       await session.login(this.username, this.password);
       const tenantId = await this.loadMembers();
       await this.loadRoles(tenantId);
-      await this.loadAdmin();
+      await this.loadAdmin(tenantId);
       this.loggedIn = true;
     } catch (err) {
       const apiErr = err as ApiError;
@@ -131,6 +151,10 @@ struct Index {
       this.tenantTotal = 0;
       this.clients = [];
       this.clientTotal = 0;
+      this.apps = [];
+      this.appTotal = 0;
+      this.menus = [];
+      this.menuClientText = '';
       this.password = '';
       this.busy = false;
     }
@@ -256,7 +280,7 @@ struct Index {
                 Text(`${item.clientName}（${item.clientId}）`)
                   .fontSize(14)
                   .fontWeight(FontWeight.Medium)
-                Text(`状态 ${item.status} · token ${item.accessTokenValidity}s`)
+                Text(`状态 ${item.status} · token ${item.accessTokenValidity}s · 点选看菜单`)
                   .fontSize(12)
                   .opacity(0.6)
               }
@@ -264,10 +288,47 @@ struct Index {
               .width('100%')
             }
             .padding(4)
+            .onClick(() => {
+              this.loadClientMenus(item);
+            })
           }, (item: OAuthClient) => item.id)
         }
         .width('88%')
         .height(this.clients.length > 4 ? '14%' : undefined)
+        if (this.menuClientText !== '') {
+          Text(this.menuClientText)
+            .fontSize(13)
+            .opacity(0.75)
+        }
+        if (this.menus.length > 0) {
+          List() {
+            ForEach(this.menus, (item: SysMenu) => {
+              ListItem() {
+                Text(`${'　'.repeat(item.parentId === '' || item.parentId === '0' ? 0 : 1)}${item.title}（${item.type}）`)
+                  .fontSize(13)
+                  .width('100%')
+              }
+              .padding(3)
+            }, (item: SysMenu) => item.id)
+          }
+          .width('88%')
+          .height(this.menus.length > 4 ? '14%' : undefined)
+        }
+        Text(`租户应用（共 ${this.appTotal} 条）`)
+          .fontSize(16)
+          .fontWeight(FontWeight.Medium)
+        List() {
+          ForEach(this.apps, (item: TenantApplication) => {
+            ListItem() {
+              Text(`${item.clientId} · 状态 ${item.status}${item.expireTime !== undefined ? ` · 至 ${item.expireTime}` : ''}`)
+                .fontSize(14)
+                .width('100%')
+            }
+            .padding(4)
+          }, (item: TenantApplication) => item.id)
+        }
+        .width('88%')
+        .height(this.apps.length > 4 ? '14%' : undefined)
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

@@ -5,7 +5,7 @@
 import { ApiClient } from 'harmonyos-api-runtime';
 import {
   SessionsApi, MeApi, TenantMembersApi, TenantRolesApi, TenantRoleMenusApi,
-  AdminTenantsApi, AdminClientsApi
+  AdminTenantsApi, AdminClientsApi, TenantApplicationsApi, ClientsApi, ClientMenusApi
 } from '../shared';
 import { CurrentUser } from '../shared/models/CurrentUser';
 import { TenantMembersListTenantUsersResponse } from '../shared/models/TenantMembersListTenantUsersResponse';
@@ -13,6 +13,9 @@ import { TenantRolesListSysRolesResponse } from '../shared/models/TenantRolesLis
 import { RoleMenuGrant } from '../shared/models/RoleMenuGrant';
 import { AdminTenantsListTenantsResponse } from '../shared/models/AdminTenantsListTenantsResponse';
 import { AdminClientsListClientsResponse } from '../shared/models/AdminClientsListClientsResponse';
+import { TenantApplicationsListTenantApplicationsResponse } from '../shared/models/TenantApplicationsListTenantApplicationsResponse';
+import { OAuthClientPublicInfo } from '../shared/models/OAuthClientPublicInfo';
+import { SysMenu } from '../shared/models/SysMenu';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -28,6 +31,9 @@ export class Session {
   private tenantRoleMenusApi: TenantRoleMenusApi | null = null;
   private adminTenantsApi: AdminTenantsApi | null = null;
   private adminClientsApi: AdminClientsApi | null = null;
+  private tenantApplicationsApi: TenantApplicationsApi | null = null;
+  private clientsApi: ClientsApi | null = null;
+  private clientMenusApi: ClientMenusApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -44,6 +50,9 @@ export class Session {
     this.tenantRoleMenusApi = new TenantRoleMenusApi(client);
     this.adminTenantsApi = new AdminTenantsApi(client);
     this.adminClientsApi = new AdminClientsApi(client);
+    this.tenantApplicationsApi = new TenantApplicationsApi(client);
+    this.clientsApi = new ClientsApi(client);
+    this.clientMenusApi = new ClientMenusApi(client);
   }
 
   private requireSessions(): SessionsApi {
@@ -95,6 +104,27 @@ export class Session {
     return this.adminClientsApi;
   }
 
+  private requireTenantApplications(): TenantApplicationsApi {
+    if (this.tenantApplicationsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.tenantApplicationsApi;
+  }
+
+  private requireClients(): ClientsApi {
+    if (this.clientsApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.clientsApi;
+  }
+
+  private requireClientMenus(): ClientMenusApi {
+    if (this.clientMenusApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.clientMenusApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -133,6 +163,21 @@ export class Session {
 
   listClients(page: number, pageSize: number): Promise<AdminClientsListClientsResponse> {
     return this.requireAdminClients().listClients(page, pageSize);
+  }
+
+  // 租户应用只读列表（片5）：本租户订阅的应用面，0 基分页
+  listTenantApplications(tenantId: string, page: number, pageSize: number): Promise<TenantApplicationsListTenantApplicationsResponse> {
+    return this.requireTenantApplications().listTenantApplications(tenantId, page, pageSize);
+  }
+
+  // 应用公开信息（片5）：点客户端拉详情（无鉴权面，公开形状）
+  getClientPublic(clientId: string): Promise<OAuthClientPublicInfo> {
+    return this.requireClients().getClient(clientId);
+  }
+
+  // 应用菜单扁平节点（片5）：SysMenu[]（轮子 7dc16f2 后别名保数组语义）
+  listClientMenus(clientId: string): Promise<Array<SysMenu>> {
+    return this.requireClientMenus().listSysMenus(clientId);
   }
 
   async logout(): Promise<void> {

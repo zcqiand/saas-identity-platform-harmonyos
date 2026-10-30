@@ -1,20 +1,18 @@
-// 入口 Ability：只挂 Index 页（登录片 + 成员列表片 + 角色片 + admin 只读片）。下方
+// 入口 Ability：只挂 Index 页（登录/成员/角色/admin/应用菜单 五片）。下方
 // [shared 触碰] 仅保留尚未接页面的 Api 类——ArkTS 编译图 = import 闭包，未 import 的
 // 生成文件不进编译；各片接线后从触碰集移除（SessionsApi/MeApi 由 session/Session.ets +
-// 登录片消费，TenantMembersApi 由成员列表片消费，TenantRolesApi/TenantRoleMenusApi 由
-// 角色片消费，AdminTenantsApi/AdminClientsApi 由 admin 只读片消费）。
+// 登录片消费，TenantMembersApi 成员片 / TenantRolesApi+TenantRoleMenusApi 角色片 /
+// AdminTenantsApi+AdminClientsApi admin 片 / TenantApplicationsApi+ClientsApi+ClientMenusApi
+// 应用菜单片）。
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { ClientMenusApi, ClientsApi, OAuthApi, TenantApplicationsApi } from '../shared';
+import { OAuthApi } from '../shared';
 import { ApiClient } from 'harmonyos-api-runtime';
 
 // [shared 触碰] 未接线 Api 类实例化触碰：编译覆盖占位（spike 同款），逐片消费后移除。
 const __SHARED_TOUCH__: Array<Object> = [
-  new ClientMenusApi(new ApiClient('https://touch.invalid')),
-  new ClientsApi(new ApiClient('https://touch.invalid')),
-  new OAuthApi(new ApiClient('https://touch.invalid')),
-  new TenantApplicationsApi(new ApiClient('https://touch.invalid'))
+  new OAuthApi(new ApiClient('https://touch.invalid'))
 ];
 void __SHARED_TOUCH__;
 
