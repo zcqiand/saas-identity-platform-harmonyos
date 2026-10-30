@@ -19,6 +19,9 @@ import { OAuthClientPublicInfo } from '../shared/models/OAuthClientPublicInfo';
 import { SysMenu } from '../shared/models/SysMenu';
 import { OAuthAuthorizeResponse } from '../shared/models/OAuthAuthorizeResponse';
 import { TokenResponse } from '../shared/models/TokenResponse';
+import { SysRole } from '../shared/models/SysRole';
+import { CreateSysRoleRequest } from '../shared/models/CreateSysRoleRequest';
+import { RoleForm, assembleCreateRole, ensureRoleId } from '../forms/RoleForms';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
@@ -168,6 +171,16 @@ export class Session {
   // 角色已授权菜单（片3）：返回 RoleMenuGrant（roleId/tenantId/menuIds/updatedAt）
   listRoleMenus(tenantId: string, roleId: string): Promise<RoleMenuGrant> {
     return this.requireTenantRoleMenus().listSysRoleMenus(tenantId, roleId, undefined);
+  }
+
+  // 角色写流（M00.F03.I02/I05）：表单装配 fail-fast 后走生成 Api。
+  // I04 更新走 PATCH（runtime @ohos 无 PATCH）挂账不接
+  async createRole(tenantId: string, form: RoleForm): Promise<SysRole> {
+    return this.requireTenantRoles().createSysRole(tenantId, assembleCreateRole(form));
+  }
+
+  async deleteRole(tenantId: string, roleId: string): Promise<void> {
+    await this.requireTenantRoles().deleteSysRole(tenantId, ensureRoleId(roleId));
   }
 
   // admin 只读双列表（片4）：租户全量面 + OAuth 客户端全量面（0 基分页）

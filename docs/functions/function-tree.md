@@ -28,21 +28,22 @@
 
 | 模块 ID | 模块名称 | 说明 | 状态 |
 |---|---|---|---|
-| M01 | （待填） | | 规划 |
+| M00 | 租户管理 | 租户×client 作用域角色管理（HarmonyOS ArkTS 消费面；ID 与 family shared 树同源镜像登记） | 开发中 |
 
 ---
 
-## M01 （待填）
+## M00 租户管理
 
 | 功能 ID | 功能名称 | 说明 | 状态 |
 |---|---|---|---|
-| M01.F01 | （待填） | | 规划 |
+| M00.F03 | 租户角色 | 角色 CRUD（HarmonyOS：create/delete 写面；I04 更新 PATCH 挂账不接） | 开发中 |
 
-### M01.F01 （待填）
+### M00.F03 租户角色
 
 | 子项 ID | 名称 | 类型 | 交付 | 说明 | 状态 |
 |---|---|---|---|---|---|
-| M01.F01.I01 | （待填） | 查询 | 后端 | | 规划 |
+| M00.F03.I02 | 创建角色（HarmonyOS 写面） | 按钮 | 前端+后端 | POST /api/v1/tenants/{tenantId}/roles：forms/RoleForms clientId/roleCode/roleName 必填 fail-fast，description 选填；Hypium 锚 entry/src/test/Biz.test.ets | 已上线 |
+| M00.F03.I05 | 删除角色（HarmonyOS 写面） | 按钮 | 前端+后端 | DELETE /api/v1/tenants/{tenantId}/roles/{roleId}：列表行「删」，ensureRoleId 空 id fail-fast | 已上线 |
 
 ---
 

@@ -11,7 +11,8 @@ import { OAuthClient } from '../shared/models/OAuthClient';
 import { TenantApplication } from '../shared/models/TenantApplication';
 import { OAuthClientPublicInfo } from '../shared/models/OAuthClientPublicInfo';
 import { SysMenu } from '../shared/models/SysMenu';
-import { session } from '../session/Session';
+import { session, SAAS_CLIENT_ID } from '../session/Session';
+import { RoleForm } from '../forms/RoleForms';
 
 @Entry
 @Component
@@ -26,6 +27,11 @@ struct Index {
   @State memberTotal: number = 0;
   @State roles: SysRole[] = [];
   @State roleTotal: number = 0;
+  // 写面（角色 create/delete）表单态：clientId 预填 console 应用（家族档案值表）
+  @State roleFormClientId: string = SAAS_CLIENT_ID;
+  @State roleFormCode: string = '';
+  @State roleFormName: string = '';
+  @State roleFormDesc: string = '';
   @State grantText: string = '';
   @State tenants: Tenant[] = [];
   @State tenantTotal: number = 0;
@@ -81,6 +87,62 @@ struct Index {
     }
     const grant = await session.listRoleMenus(me.currentTenantId, role.id);
     this.grantText = `${role.roleName} 已授权菜单 ${grant.menuIds.length} 个（${grant.updatedAt}）`;
+  }
+
+  // 写面（角色 create/delete）：clientId 预填 saas-console；操作后重载角色列表
+  private async currentTenantId(): Promise<string> {
+    const me = await session.whoami();
+    if (me.currentTenantId === undefined || me.currentTenantId === '') {
+      throw new Error('whoami 缺 currentTenantId——无法定位角色面（fail-fast 禁兜底）');
+    }
+    return me.currentTenantId;
+  }
+
+  private resetRoleForm(): void {
+    this.roleFormCode = '';
+    this.roleFormName = '';
+    this.roleFormDesc = '';
+  }
+
+  private async submitCreateRole(): Promise<void> {
+    if (this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.message = '';
+    try {
+      let f: RoleForm = {
+        clientId: this.roleFormClientId,
+        roleCode: this.roleFormCode,
+        roleName: this.roleFormName,
+        description: this.roleFormDesc
+      };
+      const created = await session.createRole(await this.currentTenantId(), f);
+      this.message = `已创建角色 ${created.roleCode}`;
+      this.resetRoleForm();
+      await this.loadRoles(await this.currentTenantId());
+    } catch (err) {
+      this.message = `创建角色失败：${(err as Error).message}`;
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private async submitDeleteRole(role: SysRole): Promise<void> {
+    if (this.busy) {
+      return;
+    }
+    this.busy = true;
+    this.message = '';
+    try {
+      await session.deleteRole(await this.currentTenantId(), role.id);
+      this.message = `已删除角色 ${role.roleCode}`;
+      await this.loadRoles(await this.currentTenantId());
+    } catch (err) {
+      this.message = `删除角色失败：${(err as Error).message}`;
+    } finally {
+      this.busy = false;
+    }
   }
 
   // admin 只读双列表（片4）：租户 + OAuth 客户端，0 基分页；随后拉本租户订阅应用（片5）
@@ -159,6 +221,7 @@ struct Index {
       this.roles = [];
       this.roleTotal = 0;
       this.grantText = '';
+      this.resetRoleForm();
       this.tenants = [];
       this.tenantTotal = 0;
       this.clients = [];
@@ -239,15 +302,24 @@ struct Index {
           List() {
             ForEach(this.roles, (item: SysRole) => {
               ListItem() {
-                Column({ space: 2 }) {
-                  Text(`${item.roleName}（${item.roleCode}）`)
-                    .fontSize(14)
-                    .fontWeight(FontWeight.Medium)
-                  Text(`状态 ${item.status}${item.isPreset ? ' · 预置' : ''} · ${item.clientId}`)
-                    .fontSize(12)
-                    .opacity(0.6)
+                Row({ space: 8 }) {
+                  Column({ space: 2 }) {
+                    Text(`${item.roleName}（${item.roleCode}）`)
+                      .fontSize(14)
+                      .fontWeight(FontWeight.Medium)
+                    Text(`状态 ${item.status}${item.isPreset ? ' · 预置' : ''} · ${item.clientId}`)
+                      .fontSize(12)
+                      .opacity(0.6)
+                  }
+                  .alignItems(HorizontalAlign.Start)
+                  .layoutWeight(1)
+                  // @entry M00.F03.I05 删除角色
+                  Button('删')
+                    .fontSize(11)
+                    .onClick(() => {
+                      this.submitDeleteRole(item);
+                    })
                 }
-                .alignItems(HorizontalAlign.Start)
                 .width('100%')
               }
               .padding(6)
@@ -263,6 +335,36 @@ struct Index {
             .fontSize(13)
             .opacity(0.6)
         }
+        Text('写面 · 创建角色（角色编码/名称必填）')
+          .fontSize(15)
+          .fontWeight(FontWeight.Medium)
+        TextInput({ placeholder: '应用 clientId', text: this.roleFormClientId })
+          .width('88%')
+          .onChange((v: string) => {
+            this.roleFormClientId = v;
+          })
+        TextInput({ placeholder: '* 角色编码（如 op-manager）', text: this.roleFormCode })
+          .width('88%')
+          .onChange((v: string) => {
+            this.roleFormCode = v;
+          })
+        TextInput({ placeholder: '* 角色名称', text: this.roleFormName })
+          .width('88%')
+          .onChange((v: string) => {
+            this.roleFormName = v;
+          })
+        TextInput({ placeholder: '描述（选填）', text: this.roleFormDesc })
+          .width('88%')
+          .onChange((v: string) => {
+            this.roleFormDesc = v;
+          })
+        // @entry M00.F03.I02 创建角色
+        Button(this.busy ? '创建中…' : '创建角色')
+          .width('60%')
+          .enabled(!this.busy)
+          .onClick(() => {
+            this.submitCreateRole();
+          })
         if (this.grantText !== '') {
           Text(this.grantText)
             .fontSize(13)
