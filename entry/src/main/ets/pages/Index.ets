@@ -35,6 +35,7 @@ struct Index {
   @State appTotal: number = 0;
   @State menus: SysMenu[] = [];
   @State menuClientText: string = '';
+  @State oauthText: string = '';
 
   private async ensureConfigured(): Promise<void> {
     if (this.loggedIn) {
@@ -105,6 +106,17 @@ struct Index {
     this.menuClientText = `${info.clientName}（${info.clientId}）菜单 ${menus.length} 个`;
   }
 
+  // OAuth 三步流（片6）：authorize（state 回显校验）→ token 交换
+  private async doOAuthFlow(): Promise<void> {
+    const state = `hm-${Date.now()}`;
+    const az = await session.oauthAuthorize(state);
+    if (az.state !== state) {
+      throw new Error(`OAuth state 回显不一致（${az.state} ≠ ${state}）——fail-fast 中止`);
+    }
+    const tk = await session.oauthToken(az.code);
+    this.oauthText = `OAuth 三步流过：token ${tk.accessToken.slice(0, 8)}…（${tk.tokenType}，exp ${tk.expiresIn}s，rt ${tk.refreshToken.slice(0, 6)}…）`;
+  }
+
   private async doLogin(): Promise<void> {
     if (this.busy) {
       return;
@@ -155,6 +167,7 @@ struct Index {
       this.appTotal = 0;
       this.menus = [];
       this.menuClientText = '';
+      this.oauthText = '';
       this.password = '';
       this.busy = false;
     }
@@ -329,6 +342,17 @@ struct Index {
         }
         .width('88%')
         .height(this.apps.length > 4 ? '14%' : undefined)
+        Button('OAuth 三步流探针（authorize → token）')
+          .width('80%')
+          .enabled(!this.busy)
+          .onClick(() => {
+            this.doOAuthFlow();
+          })
+        if (this.oauthText !== '') {
+          Text(this.oauthText)
+            .fontSize(13)
+            .opacity(0.75)
+        }
         Button(this.busy ? '登出中…' : '登出')
           .width('80%')
           .enabled(!this.busy)

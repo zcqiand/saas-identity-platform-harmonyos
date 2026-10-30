@@ -1,19 +1,14 @@
-// 入口 Ability：只挂 Index 页（登录/成员/角色/admin/应用菜单 五片）。下方
-// [shared 触碰] 仅保留尚未接页面的 Api 类——ArkTS 编译图 = import 闭包，未 import 的
-// 生成文件不进编译；各片接线后从触碰集移除（SessionsApi/MeApi 由 session/Session.ets +
-// 登录片消费，TenantMembersApi 成员片 / TenantRolesApi+TenantRoleMenusApi 角色片 /
-// AdminTenantsApi+AdminClientsApi admin 片 / TenantApplicationsApi+ClientsApi+ClientMenusApi
-// 应用菜单片）。
+// 入口 Ability：只挂 Index 页（六片全接线：登录/成员/角色/admin/应用菜单/OAuth）。
+// [shared 触碰] 已清空——11 个生成 Api 类全部由页面/会话消费（ArkTS 编译图 = import 闭包，
+// import 面即编译面）：SessionsApi/MeApi 由 session/Session.ets+登录片，TenantMembersApi
+// 成员片，TenantRolesApi+TenantRoleMenusApi 角色片，AdminTenantsApi+AdminClientsApi
+// admin 片，TenantApplicationsApi+ClientsApi+ClientMenusApi 应用菜单片，OAuthApi OAuth 片。
 import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { OAuthApi } from '../shared';
-import { ApiClient } from 'harmonyos-api-runtime';
 
-// [shared 触碰] 未接线 Api 类实例化触碰：编译覆盖占位（spike 同款），逐片消费后移除。
-const __SHARED_TOUCH__: Array<Object> = [
-  new OAuthApi(new ApiClient('https://touch.invalid'))
-];
+// [shared 触碰] 全量消费后清空（留位：后续新 Api 类接线前的编译覆盖占位）。
+const __SHARED_TOUCH__: Array<Object> = [];
 void __SHARED_TOUCH__;
 
 const DOMAIN: number = 0x0000;

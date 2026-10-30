@@ -5,7 +5,8 @@
 import { ApiClient } from 'harmonyos-api-runtime';
 import {
   SessionsApi, MeApi, TenantMembersApi, TenantRolesApi, TenantRoleMenusApi,
-  AdminTenantsApi, AdminClientsApi, TenantApplicationsApi, ClientsApi, ClientMenusApi
+  AdminTenantsApi, AdminClientsApi, TenantApplicationsApi, ClientsApi, ClientMenusApi,
+  OAuthApi
 } from '../shared';
 import { CurrentUser } from '../shared/models/CurrentUser';
 import { TenantMembersListTenantUsersResponse } from '../shared/models/TenantMembersListTenantUsersResponse';
@@ -16,11 +17,15 @@ import { AdminClientsListClientsResponse } from '../shared/models/AdminClientsLi
 import { TenantApplicationsListTenantApplicationsResponse } from '../shared/models/TenantApplicationsListTenantApplicationsResponse';
 import { OAuthClientPublicInfo } from '../shared/models/OAuthClientPublicInfo';
 import { SysMenu } from '../shared/models/SysMenu';
+import { OAuthAuthorizeResponse } from '../shared/models/OAuthAuthorizeResponse';
+import { TokenResponse } from '../shared/models/TokenResponse';
 import { parseApiBaseUrl } from '../config/AppConfig';
 import { SessionState, MemoryTokenStore } from './SessionState';
 
 // 家族档案 saas.md：console 应用 clientId=saas-console
 export const SAAS_CLIENT_ID = 'saas-console';
+// OAuth 三步流回调（dev 种子 oauth_client.redirect_uris 实测值；saas-console 专有 scheme）
+export const SAAS_OAUTH_REDIRECT_URI = 'saasidentity://oauth/callback';
 
 export class Session {
   private readonly state: SessionState;
@@ -34,6 +39,7 @@ export class Session {
   private tenantApplicationsApi: TenantApplicationsApi | null = null;
   private clientsApi: ClientsApi | null = null;
   private clientMenusApi: ClientMenusApi | null = null;
+  private oauthApi: OAuthApi | null = null;
 
   constructor() {
     this.state = new SessionState(new MemoryTokenStore());
@@ -53,6 +59,7 @@ export class Session {
     this.tenantApplicationsApi = new TenantApplicationsApi(client);
     this.clientsApi = new ClientsApi(client);
     this.clientMenusApi = new ClientMenusApi(client);
+    this.oauthApi = new OAuthApi(client);
   }
 
   private requireSessions(): SessionsApi {
@@ -125,6 +132,13 @@ export class Session {
     return this.clientMenusApi;
   }
 
+  private requireOAuth(): OAuthApi {
+    if (this.oauthApi === null) {
+      throw new Error('Session 未配置（configure 未调用/未完成）——禁静默兜底 base URL');
+    }
+    return this.oauthApi;
+  }
+
   authenticated(): boolean {
     return this.state.authenticated();
   }
@@ -178,6 +192,25 @@ export class Session {
   // 应用菜单扁平节点（片5）：SysMenu[]（轮子 7dc16f2 后别名保数组语义）
   listClientMenus(clientId: string): Promise<Array<SysMenu>> {
     return this.requireClientMenus().listSysMenus(clientId);
+  }
+
+  // OAuth 三步流（片6）：authorize（Bearer 会话签出 code）→ token 交换（authorization_code）
+  oauthAuthorize(state: string): Promise<OAuthAuthorizeResponse> {
+    return this.requireOAuth().authorize({
+      clientId: SAAS_CLIENT_ID,
+      redirectUri: SAAS_OAUTH_REDIRECT_URI,
+      responseType: 'code',
+      state: state,
+    });
+  }
+
+  oauthToken(code: string): Promise<TokenResponse> {
+    return this.requireOAuth().token({
+      grantType: 'authorization_code',
+      code: code,
+      clientId: SAAS_CLIENT_ID,
+      redirectUri: SAAS_OAUTH_REDIRECT_URI,
+    });
   }
 
   async logout(): Promise<void> {
